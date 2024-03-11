@@ -67,11 +67,11 @@ run_checks = 1;
 % set to 1 to save checks
 save_checks = 0;
 
-if ~exist('subj','var') || isempty(subj), subj = "FEp1"; else, subj = string(subj); end
+if ~exist('subj','var') || isempty(subj), subj = "FE1"; else, subj = string(subj); end
 disp("subj: "+subj);
 
 % trials, aka conditions
-trialTypes = ["bpm45"];
+trialTypes = ["bpm60"];
 
 % adaptation studies
 % blocks = ["pre" "pert" "post"];
@@ -148,6 +148,9 @@ if run_checks
 
     % Check sampling rates of marker and treadmill files
     [TM, MC, CHK.srate] = check_srate(TM,MC,trialTypes,savepath);
+
+    % Check perturbation frequency onset
+    [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
 end
 
 %%  4 - Sync and resample data
