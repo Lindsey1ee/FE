@@ -8,6 +8,9 @@ function GE = get_gaitevents(markers,lpfc,srate,window)
 [b, a] = butter(4,2.0*1/srate*lpfc);
 
 for m = ["RHEE" "RTOE" "LHEE" "LTOE"]
+    if istable(markers.(m))
+            markers.(m) = table2array(markers.(m));
+    end
     filteredmarkers.(m) = filtfilt(b,a,markers.(m));
 end
 
@@ -26,13 +29,13 @@ ylim([-2 2]);
 % works assuming lab axes have been rotated to be the more intuitive
 % column 2 = y, a-p
 for m = ["RHEE" "LHEE"]
-    [pks.(m),locs.(m)] = findpeaks(filteredmarkers.(m)(:,2),'MinPeakDistance',srate*0.75);
+    [pks.(m),locs.(m)] = findpeaks(filteredmarkers.(m)(:,2), 'MinPeakDistance', srate*0.75);
 end
 
 % take negative so that most posterior is positive for find peaks function
 % column 2 = y, a-p
 for m = ["RTOE" "LTOE"]
-    [pks.(m),locs.(m)] = findpeaks(-filteredmarkers.(m)(:,2),'MinPeakDistance',srate*0.75);
+    [pks.(m),locs.(m)] = findpeaks(-filteredmarkers.(m)(:,2), 'MinPeakDistance', srate*0.75);
 end
 
 % we don't need to have the gait events for the strides prior to or after
