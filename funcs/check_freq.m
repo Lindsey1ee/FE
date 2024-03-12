@@ -1,7 +1,7 @@
-function [TM, MC, T] = check_freq(TM,MC,trialTypes,savepath)
+function [TM, T] = check_freq(TM,trialTypes,savepath)
 
 %% freq check
-
+ct=1;
 for t = trialTypes
 %want to find the frequency the sway occurs at
 %Find Onset
@@ -24,6 +24,11 @@ disp(mean(pert_time))
 avg_freq = 1/mean(pert_time);
 disp('actual frequency:')
 disp(avg_freq)
+
+TM.(t).checks.freq = avg_freq;
+freqinfo(ct,1) = TM.(t).checks.freq;
+
+ ct=ct+1;
 
 end
 

@@ -150,7 +150,7 @@ if run_checks
     [TM, MC, CHK.srate] = check_srate(TM,MC,trialTypes,savepath);
 
     % Check perturbation frequency onset
- %   [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
+    [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
 end
 
 %%  4 - Sync and resample data
