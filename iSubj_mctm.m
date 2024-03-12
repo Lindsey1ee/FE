@@ -353,7 +353,8 @@ for t = trialTypes
     strides.MC.(t).For.right = split_strides_normgc(MC.(t).For.right, GE.(t).events, 200, 1);
     strides.MC.(t).For.left = split_strides_normgc(MC.(t).For.left, GE.(t).events, 200, 1);
    
-    variables = TM.(t).idata(:,["SwayActual" "SpeedActual1" "SpeedActual2" "stride" "COMz"]);
+   % variables = TM.(t).idata(:,["SwayActual" "SpeedActual1" "SpeedActual2" "stride" "COMz"]);
+    variables = TM.(t).idata(:,["SwayActual" "SpeedActual1" "SpeedActual2" "COMz"]);
     strides.TM.(t) = split_strides_normgc(variables, GE.(t).events, 200, 1);
    
     pause
@@ -398,6 +399,9 @@ for t = trialTypes
     %     end
   
     wspddata = table2array(strides.MC.(t).wspd.normdata);
+    strides.(t).pre = find(MC.(t).itime(GE.(t).events.RHS)>10 & MC.(t).itime(GE.(t).events.RHS)<70);
+    strides.(t).pert = find(MC.(t).itime(GE.(t).events.RHS)>70 & MC.(t).itime(GE.(t).events.RHS)<370);
+    strides.(t).post = find(MC.(t).itime(GE.(t).events.RHS)>370 & MC.(t).itime(GE.(t).events.RHS)<430);
 
     if t == "nopert"
 
@@ -415,8 +419,8 @@ for t = trialTypes
         title(t)
 
     else
-        WSPD.(t).mean(:,1) = mean(wspddata(:,1:80),2);
-        WSPD.(t).std(:,1) = std(wspddata(:,1:80),0,2);
+        WSPD.(t).mean(:,1) = mean(wspddata(:,1:strides.pre(end)),2);
+        WSPD.(t).std(:,1) = std(wspddata(:,1:strides.pre(end)),0,2);
         WSPD.(t).mean(:,2) = mean(wspddata(:,81:480),2);
         WSPD.(t).std(:,2) = std(wspddata(:,81:480),0,2);
         WSPD.(t).mean(:,3) = mean(wspddata(:,481:end),2);
@@ -479,5 +483,5 @@ for t = trialTypes
 
     % ~~ END FILTER DATA ~~
     SK.(t) = calc_stepkinematics(MC.(t).markers,GE.(t).events(GE.(t).goodstrides,:),T,des_srate);
-    
+
 end

@@ -274,11 +274,14 @@ for t = trialTypes
 %         % 560 because there are 560 strides in the protocol
 %         window(2) = find(TM.(t).idata(:,idx)==560,1,'last');
 %     end
+
 %chopped out first 10 sec (ramp up speed) and end at 420 seconds
     window(1) = find(TM.(t).idata.t < 10, 1, 'last') + 1;
     window(2) = find(TM.bpm60.idata.t < 420, 1, 'last') +1 ;
+
     % ****
     lpfc = 6; % lowpass cutoff frequency
+
     % ****
     disp("******* " + t + " *******")
     GE.(t) = get_gaitevents(MC.(t).markers,lpfc,des_srate,window);
@@ -295,31 +298,38 @@ for t = trialTypes
     MC.(t).For.filt.right = array2table(filtfilt(b,a,MC.(t).For.right{:,:}));
     MC.(t).For.filt.left.Properties.VariableNames = ["X_ML" "Y_AP" "Z_UP"];
     MC.(t).For.filt.right.Properties.VariableNames = ["X_ML" "Y_AP" "Z_UP"];
+
     % ~~
     % after rotation (above) col 3 = z, up
     % after interpolations
     vGRF_filt = [MC.(t).For.filt.left{:,3}, MC.(t).For.filt.right{:,3}];
+
     % remember to pass interpolated data. vGRF should be interpolated above
     % only plot goodstrides
     check_gaitevents(vGRF_filt,GE.(t).events(GE.(t).goodstrides,:),0,subj+", "+t)
+
 end
 
 %%  8 - Calculate any metrics where we want timeseries plots
 % self-paced walking speed, COM, COMvel, xCOM
 %
 for t = trialTypes
+
     % ~~ FILTER DATA ~~
     lpfc = 6;
     [b, a] = butter(4,2.0*1/MC.srate*lpfc);
     TM.(t).fidata = array2table(filtfilt(b,a,TM.(t).idata{:,["SpeedActual1" "SpeedActual2" "SwayActual" "COMz"]}));
     TM.(t).fidata.Properties.VariableNames = ["SpeedActual1" "SpeedActual2" "SwayActual" "COMz"];
+
     for m = ["RASI" "LASI" "RPSI" "LPSI"]
         MC.(t).markers.filt.(m) = array2table(filtfilt(b,a,MC.(t).markers.(m){:,:}));
         MC.(t).markers.filt.(m).Properties.VariableNames = ["X_ML" "Y_AP" "Z_UP"];
     end
+
     % ~~ END FILTER DATA ~~
     MC.(t).COM.pos = (MC.(t).markers.RASI{:,:} + MC.(t).markers.LASI{:,:} + ...
         MC.(t).markers.RPSI{:,:} + MC.(t).markers.LPSI{:,:})/4;
+
     % figure
     % plot(TM.(t).itime,-TM.(t).idata.COMz,'o');
     % hold on
@@ -327,19 +337,26 @@ for t = trialTypes
     MC.(t).COM.dot = diff(MC.(t).COM.pos)./diff(MC.(t).itime);
     MC.(t).COM.dot = [MC.(t).COM.dot;nan nan nan]; % add nan to keep same length as position
     MC.(t).wspd = mean([TM.(t).idata.SpeedActual1, TM.(t).idata.SpeedActual2],2) + MC.(t).COM.dot(:,2);
+
 end
 %%  9 - Split timeseries into strides
 %
 for t = trialTypes
+
     %     variables = TM.(t).data(:,["stride" "SpeedActual1" "SpeedActual2" "SwayActual"]);
     %     strides.TM.(t) = split_strides_normgc(variables, GE.(t).events, 200, 1);
     strides.MC.(t).COM.pos = split_strides_normgc(array2table(MC.(t).COM.pos), GE.(t).events, 200, 1);
     strides.MC.(t).COM.dot = split_strides_normgc(array2table(MC.(t).COM.dot), GE.(t).events, 200, 1);
+   
     strides.MC.(t).wspd = split_strides_normgc(array2table(MC.(t).wspd), GE.(t).events, 200, 1);
+   
     strides.MC.(t).For.right = split_strides_normgc(MC.(t).For.right, GE.(t).events, 200, 1);
     strides.MC.(t).For.left = split_strides_normgc(MC.(t).For.left, GE.(t).events, 200, 1);
-    variables = TM.(t).idata(:,["SwayActual" "SpeedActual1" "SpeedActual2" "stride" "COMz"]);
+   
+   % variables = TM.(t).idata(:,["SwayActual" "SpeedActual1" "SpeedActual2" "stride" "COMz"]);
+    variables = TM.(t).idata(:,["SwayActual" "SpeedActual1" "SpeedActual2" "COMz"]);
     strides.TM.(t) = split_strides_normgc(variables, GE.(t).events, 200, 1);
+   
     pause
     close all
 end
@@ -366,8 +383,11 @@ end
 % end
 figure
 color2use = [1 0 0; 0 1 0; 0 0 1];
+
 ct = 1; ntr = length(trialTypes);
+
 for t = trialTypes
+  
     % no perturbation stride
 %     strides2plot = find(fix(min(strides.TM.(t).normdata.SwayActual)*100)~=0);
     %     if t == "nopert"
@@ -377,17 +397,27 @@ for t = trialTypes
     %         varmean = mean(strides.MC.(t).For.left.normdata.(var2plot)(:,strides2plot),2);
     %         varstd = std(strides.MC.(t).For.left.normdata.(var2plot)(:,strides2plot),0,2);
     %     end
+  
     wspddata = table2array(strides.MC.(t).wspd.normdata);
+    strides.(t).pre = find(MC.(t).itime(GE.(t).events.RHS)>10 & MC.(t).itime(GE.(t).events.RHS)<70);
+    strides.(t).pert = find(MC.(t).itime(GE.(t).events.RHS)>70 & MC.(t).itime(GE.(t).events.RHS)<370);
+    strides.(t).post = find(MC.(t).itime(GE.(t).events.RHS)>370 & MC.(t).itime(GE.(t).events.RHS)<430);
+
     if t == "nopert"
+
         WSPD.nopert.mean = mean(wspddata,2);
         WSPD.nopert.std = std(wspddata,0,2);
+       
         subplot(1,ntr,ct)
         hold on
+      
         varmean = WSPD.(t).mean(:,1); varstd = WSPD.(t).std(:,1);
+
 %         patch(patch_x, [varmean+varstd; flipud(varmean-varstd)], 'k', 'EdgeColor', 'k', 'facealpha', 0.5, 'edgealpha', 0.5);
         plot(strides.MC.(t).wspd.normgc,varmean, '-','Color','k','LineWidth',2)
         ylim([0 2])
         title(t)
+
     else
         WSPD.(t).mean(:,1) = mean(wspddata(:,1:80),2);
         WSPD.(t).std(:,1) = std(wspddata(:,1:80),0,2);
@@ -395,9 +425,11 @@ for t = trialTypes
         WSPD.(t).std(:,2) = std(wspddata(:,81:480),0,2);
         WSPD.(t).mean(:,3) = mean(wspddata(:,481:end),2);
         WSPD.(t).std(:,3) = std(wspddata(:,481:end),0,2);
+      
         patch_x = [strides.MC.(t).wspd.normgc, fliplr(strides.MC.(t).wspd.normgc)]';
         subplot(1,ntr,ct)
         hold on
+       
         varmean = WSPD.(t).mean(:,1); varstd = WSPD.(t).std(:,1);
 %         patch(patch_x, [varmean+varstd; flipud(varmean-varstd)], color2use(1,:), 'EdgeColor', color2use(1,:), 'facealpha', 0.5, 'edgealpha', 0.5);
         plot(strides.MC.(t).wspd.normgc,varmean, '-','Color', color2use(1,:),'LineWidth',2)
@@ -421,28 +453,35 @@ end
 %       support (will do later)
 
 for t = trialTypes
+    
 %     idx(1) = find(TM.(t).varnames == "SpeedActual1");
 %     idx(2) = find(TM.(t).varnames == "SpeedActual2");
     % GP paper says that we filtered treadmill data at a low pass of 6 hz
 %     lpfc = 6;
 %     [b, a] = butter(4,2.0*1/MC.srate*lpfc);
 %     T.beltspd = filtfilt(b,a,TM.(t).idata{:,["SpeedActual1" "SpeedActual2"]});
+
     T.beltspd = TM.(t).fidata{:,["SpeedActual1" "SpeedActual2"]};
     T.pitch = 0; % in degrees
     T.itime = TM.(t).itime;
+
 %     figure
 %     plot(TM.(t).itime,TM.(t).idata{:,"SpeedActual1"},'LineWidth',1);
 %     hold on
 %     plot(TM.(t).itime,T.beltspd(:,1),'r:','LineWidth',2);
 %     title(t + ", SpeedActual1"); legend(["unfilt" "filt"]);
 %     xlabel("time (s)"); ylabel("belt speed")
+
     % ~~ FILTER DATA ~~
     lpfc = 6;
     [b, a] = butter(4,2.0*1/MC.srate*lpfc);
+
     for m = ["RHEE" "LHEE"]
         MC.(t).markers.filt.(m) = array2table(filtfilt(b,a,MC.(t).markers.(m){:,:}));
         MC.(t).markers.filt.(m).Properties.VariableNames = ["X_ML" "Y_AP" "Z_UP"];
     end
+
     % ~~ END FILTER DATA ~~
     SK.(t) = calc_stepkinematics(MC.(t).markers,GE.(t).events(GE.(t).goodstrides,:),T,des_srate);
+
 end
