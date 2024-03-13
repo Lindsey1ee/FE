@@ -43,7 +43,7 @@ for t = trialTypes
         locs.act(i) = [];
     end
 
-    subplot(5,1,ct)
+    subplot(6,1,ct)
     plot(TM.(t).data.t,TM.(t).data.SwayTheory,'b'); 
     hold on
     plot(TM.(t).data.t,TM.(t).data.SwayActual,'r');

@@ -71,7 +71,7 @@ if ~exist('subj','var') || isempty(subj), subj = "FE1"; else, subj = string(subj
 disp("subj: "+subj);
 
 % trials, aka conditions
-trialTypes = ["bpm60"];
+trialTypes = ["bpm75" "bpm60" "bpm45" "bpm30" "b"];
 
 % adaptation studies
 % blocks = ["pre" "pert" "post"];
@@ -150,7 +150,7 @@ if run_checks
     [TM, MC, CHK.srate] = check_srate(TM,MC,trialTypes,savepath);
 
     % Check perturbation frequency onset
-    [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
+  %  [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
 end
 
 %%  4 - Sync and resample data
@@ -397,11 +397,13 @@ for t = trialTypes
     %         varmean = mean(strides.MC.(t).For.left.normdata.(var2plot)(:,strides2plot),2);
     %         varstd = std(strides.MC.(t).For.left.normdata.(var2plot)(:,strides2plot),0,2);
     %     end
-  
+    t_start_idx = find(TM.(t).idata.t < 0.0001, 1, 'last') + 1
+    t_start = MC.(t).itime(t_start_idx)
+
     wspddata = table2array(strides.MC.(t).wspd.normdata);
-    strides.(t).pre = find(MC.(t).itime(GE.(t).events.RHS)>10 & MC.(t).itime(GE.(t).events.RHS)<70);
-    strides.(t).pert = find(MC.(t).itime(GE.(t).events.RHS)>70 & MC.(t).itime(GE.(t).events.RHS)<370);
-    strides.(t).post = find(MC.(t).itime(GE.(t).events.RHS)>370 & MC.(t).itime(GE.(t).events.RHS)<430);
+    strides.(t).pre = find(MC.(t).itime(GE.(t).events.RHS)> (10 + t_start) & MC.(t).itime(GE.(t).events.RHS) < (70 + t_start));
+    strides.(t).pert = find(MC.(t).itime(GE.(t).events.RHS)>(70 + t_start) & MC.(t).itime(GE.(t).events.RHS) < (370 + t_start));
+    strides.(t).post = find(MC.(t).itime(GE.(t).events.RHS)> (370 + t_start) & MC.(t).itime(GE.(t).events.RHS) < (430+ t_start));
 
     if t == "nopert"
 
@@ -419,12 +421,12 @@ for t = trialTypes
         title(t)
 
     else
-        WSPD.(t).mean(:,1) = mean(wspddata(:,1:80),2);
-        WSPD.(t).std(:,1) = std(wspddata(:,1:80),0,2);
-        WSPD.(t).mean(:,2) = mean(wspddata(:,81:480),2);
-        WSPD.(t).std(:,2) = std(wspddata(:,81:480),0,2);
-        WSPD.(t).mean(:,3) = mean(wspddata(:,481:end),2);
-        WSPD.(t).std(:,3) = std(wspddata(:,481:end),0,2);
+        WSPD.(t).mean(:,1) = mean(wspddata(:,strides.(t).pre),2);
+        WSPD.(t).std(:,1) = std(wspddata(:,strides.(t).pre),0,2);
+        WSPD.(t).mean(:,2) = mean(wspddata(:,strides.(t).pert),2);
+        WSPD.(t).std(:,2) = std(wspddata(:,strides.(t).pert),0,2);
+        WSPD.(t).mean(:,3) = mean(wspddata(:,strides.(t).post),2);
+        WSPD.(t).std(:,3) = std(wspddata(:,strides.(t).post),0,2);
       
         patch_x = [strides.MC.(t).wspd.normgc, fliplr(strides.MC.(t).wspd.normgc)]';
         subplot(1,ntr,ct)
@@ -482,6 +484,9 @@ for t = trialTypes
     end
 
     % ~~ END FILTER DATA ~~
-    SK.(t) = calc_stepkinematics(MC.(t).markers,GE.(t).events(GE.(t).goodstrides,:),T,des_srate);
+    SK.(t) = calc_stepkinematics(MC.(t).markers.filt,GE.(t).events(GE.(t).goodstrides,:),T,des_srate);
 
 end
+
+%% Save data 
+save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
