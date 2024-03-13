@@ -4,8 +4,6 @@ function [TM, T] = check_freq(TM,trialTypes,savepath)
 ct=1;
 for t = trialTypes
  if t == "nopert"
-     pert_time = 0;
-     avg_freq = 0;
 else
 %want to find the frequency the sway occurs at
 %Find Onset
@@ -42,8 +40,6 @@ avg_freq = 60/mean(pert_time);
 disp('actual frequency:')
 disp(avg_freq)
 
- end
-
 TM.(t).checks.freq.pert_time = pert_time;
 TM.(t).checks.freq.avg_freq = avg_freq;
 
@@ -51,7 +47,7 @@ freqinfo(ct,1) = TM.(t).checks.freq.avg_freq;
 
  ct=ct+1;
 
-
+ end
 end
 
 % % create table of data for easier displaying and saving
