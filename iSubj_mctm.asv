@@ -58,14 +58,14 @@ function iSubj_mctm(subj)
 clearvars -except subj;
 close all; clc;
 
- %% 1 - Experiment info - project, subj codes, trials, etc.
+%% 1 - Experiment info - project, subj codes, trials, etc.
 
 projCode = "FE";
 % if subj or var are not defined use SPP7 otherwise will used defined subj
 % set to 1 to run checks
 run_checks = 1;
 % set to 1 to save checks
-save_checks = 1;
+save_checks = 0;
 
 if ~exist('subj','var') || isempty(subj), subj = "FE1"; else, subj = string(subj); end
 disp("subj: "+subj);
@@ -397,8 +397,8 @@ for t = trialTypes
     %         varmean = mean(strides.MC.(t).For.left.normdata.(var2plot)(:,strides2plot),2);
     %         varstd = std(strides.MC.(t).For.left.normdata.(var2plot)(:,strides2plot),0,2);
     %     end
-    TM.(t).t_start_idx = find(TM.(t).idata.t < 0.0001, 1, 'last') + 1
-    TM.(t).t_start = MC.(t).itime(t_start_idx.(t))
+    t_start_idx.(t) = find(TM.(t).idata.t < 0.0001, 1, 'last') + 1
+    t_start.(t) = MC.(t).itime(t_start_idx.(t))
 
     wspddata = table2array(strides.MC.(t).wspd.normdata);
     strides.(t).pre = find(MC.(t).itime(GE.(t).events.RHS)> (10 + t_start.(t)) & MC.(t).itime(GE.(t).events.RHS) < (70 + t_start.(t)));
@@ -491,14 +491,15 @@ end
 %% frequency entrainment
 
 % TM.(t).data.t(time_idx)
-ptime = TM.(t).checks.freq.onset_time + TM.(t).t_start;
-itime = TM.(t).itime;
-gaitevents_perts(vGRF_filt,GE.(t).events(GE.(t).goodstrides,:),itime, ptime, 0,subj+", "+t)
-
-hold on
+% figure
+% 
+plot(GE.RHS,ones(nstrides,1)*threshold, 'rx','LineWidth',2);
+plot(GE.LTO,ones(nstrides,1)*threshold, 'bo','LineWidth',2);
+plot(GE.LHS,ones(nstrides,1)*threshold, 'bx','LineWidth',2);
+plot(GE.RTO,ones(nstrides,1)*threshold, 'ro','LineWidth',2);
+legend(["GRF1" "GRF2" "RHS" "LTO" "LHS" "RTO"])
+title(label)
 
 %% Save data 
 save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
-save(p2l.results+subj+"_isubj_datastruct","MC","TM", "GE");
-
-
+save(p2l.results+subj+"_isubj_datastruct","MC","TM");
