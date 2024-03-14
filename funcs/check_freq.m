@@ -6,6 +6,7 @@ for t = trialTypes
  if t == "nopert"
      pert_time = 0;
      avg_freq = 0;
+     TM.(t).data.t(time_idx) = 0;
 else
 %want to find the frequency the sway occurs at
 %Find Onset
@@ -46,6 +47,7 @@ disp(avg_freq)
 
 TM.(t).checks.freq.pert_time = pert_time;
 TM.(t).checks.freq.avg_freq = avg_freq;
+TM.(t).checks.freq.onset_time = TM.(t).data.t(time_idx);
 
 freqinfo(ct,1) = TM.(t).checks.freq.avg_freq;
 

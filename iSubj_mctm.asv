@@ -488,17 +488,7 @@ for t = trialTypes
 
 end
 
-%% frequency entrainment
-
-% TM.(t).data.t(time_idx)
-% figure
-% 
-% plot(GE.RHS,ones(nstrides,1)*threshold, 'rx','LineWidth',2);
-% plot(GE.LTO,ones(nstrides,1)*threshold, 'bo','LineWidth',2);
-% plot(GE.LHS,ones(nstrides,1)*threshold, 'bx','LineWidth',2);
-% plot(GE.RTO,ones(nstrides,1)*threshold, 'ro','LineWidth',2);
-% legend(["GRF1" "GRF2" "RHS" "LTO" "LHS" "RTO"])
-% title(label)
+%% fre
 
 %% Save data 
 save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
