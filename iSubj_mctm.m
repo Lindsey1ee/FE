@@ -277,7 +277,7 @@ for t = trialTypes
 
 %chopped out first 10 sec (ramp up speed) and end at 420 seconds
     window(1) = find(TM.(t).idata.t < 10, 1, 'last') + 1;
-    window(2) = find(TM.bpm60.idata.t < 420, 1, 'last') +1 ;
+    window(2) = find(TM.(t).idata.t < 420, 1, 'last') +1 ;
 
     % ****
     lpfc = 6; % lowpass cutoff frequency
