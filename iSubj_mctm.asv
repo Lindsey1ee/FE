@@ -210,20 +210,28 @@ for t = trialTypes
     
     EMG.(t).beg_idx = find(EMG.(t).data.Times < TM.(t).t_beg, 1, 'last');
     
-if  t == "nopert"
-    EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 300;
-    EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
-    EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
-else 
-    EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 420;
-    EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
-    EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
-end
+    if  t == "nopert"
+        EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 300;
+        EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
+        EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
+    else 
+        EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 420;
+        EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
+        EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
+    end
     
 
     
 end 
 
+
+for i = 1:length(EMG.bpm15.data.Times)
+
+        %EMG.(t).data.TimesABS(i,1) = EMG.(t).data.Times(i)-EMG.(t).data.Times(1);
+        EMG.TimesABS(i,1) = EMG.bpm15.checks.interval(1)*i - EMG.bpm15.checks.interval(1);
+
+        i = i+1;
+    end 
 
 %% Truncation Checks 
 ct = 1; 
@@ -595,10 +603,12 @@ end
 for t=trialTypes
     EMG.(t).checks.interval(1) = mean(diff(EMG.(t).data.Times));
     EMG.(t).checks.srate = 1/EMG.(t).checks.interval(1);
+
+    
 end 
 
 %convert GE index to time t
-varnames = ["RHS" "LTO" "LHS" "RTO" "RHSn"]
+varnames = ["RHS" "LTO" "LHS" "RTO" "RHSn"];
 for t=trialTypes 
     
     for i = 1:length(GE.(t).events.RHS)
@@ -614,6 +624,7 @@ for t=trialTypes
     i = i+1;
 
     GE.(t).eventsTime = table(rhs, lto, lhs, rto, rhsn, 'VariableNames',varnames);
+
 end 
 
 %% frequency entrainment

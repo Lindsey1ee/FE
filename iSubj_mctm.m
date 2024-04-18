@@ -210,20 +210,30 @@ for t = trialTypes
     
     EMG.(t).beg_idx = find(EMG.(t).data.Times < TM.(t).t_beg, 1, 'last');
     
-if  t == "nopert"
-    EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 300;
-    EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
-    EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
-else 
-    EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 420;
-    EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
-    EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
-end
+    if  t == "nopert"
+        EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 300;
+        EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
+        EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
+    else 
+        EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 420;
+        EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
+        EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
+    end
     
-
+    %check EMG sampling rate
+    EMG.(t).checks.interval(1) = mean(diff(EMG.(t).data.Times));
+    EMG.(t).checks.srate = 1/EMG.(t).checks.interval(1);
     
 end 
 
+%creating EMG time interval to start at zero
+for i = 1:length(EMG.bpm15.data.Times)
+
+        %EMG.(t).data.TimesABS(i,1) = EMG.(t).data.Times(i)-EMG.(t).data.Times(1);
+        EMG.TimesABS(i,1) = EMG.bpm15.checks.interval(1)*i - EMG.bpm15.checks.interval(1);
+
+        i = i+1;
+    end 
 
 %% Truncation Checks 
 ct = 1; 
@@ -591,11 +601,6 @@ for t = trialTypes
 end
 
 %% EMG 
-%check sampling freq
-for t=trialTypes
-    EMG.(t).checks.interval(1) = mean(diff(EMG.(t).data.Times));
-    EMG.(t).checks.srate = 1/EMG.(t).checks.interval(1);
-end 
 
 %convert GE index to time t
 varnames = ["RHS" "LTO" "LHS" "RTO" "RHSn"];
@@ -614,6 +619,26 @@ for t=trialTypes
     i = i+1;
 
     GE.(t).eventsTime = table(rhs, lto, lhs, rto, rhsn, 'VariableNames',varnames);
+
+    muscle = ["BICEPSFEMLTuV" "LATGASTROLTuV" "MEDGASTROLTuV" "SOLEUSLTuV"...
+        "RECTUSFEMLTuV" "VLOLTuV" "TIBANTLTuV" "BICEPSFEMRTuV" "LATGASTRORTuV"...
+        "MEDGASTRORTuV" "SOLEUSRTuV" "RECTUSFEMRTuV" "VLORTuV" "TIBANTRTuV"]
+
+    check_gaitevents(EMG.(t).data.muscle,GE.(t).events(GE.(t).goodstrides,:),0,subj+", "+t)
+
+% plot gait events versus vertical GRF
+nstrides = height(GE);
+
+figure
+plot(EMG.TimesABS, EMG.(t).data.muscle);
+hold on
+plot(GE.(t).eventsTime.RHS,ones(nstrides,1)*0, 'rx','LineWidth',2);
+plot(GE.(t).eventsTime.LTO,ones(nstrides,1)*0, 'bo','LineWidth',2);
+plot(GE.(t).eventsTime.LHS,ones(nstrides,1)*0, 'bx','LineWidth',2);
+plot(GE.(t).eventsTime.RTO,ones(nstrides,1)*0, 'ro','LineWidth',2);
+legend(["GRF1" "GRF2" "RHS" "LTO" "LHS" "RTO"])
+title(muscle)
+
 end 
 
 %% frequency entrainment
