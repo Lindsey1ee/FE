@@ -598,7 +598,7 @@ for t=trialTypes
 end 
 
 %convert GE index to time t
-varnames = ["RHS" "LTO" "LHS" "RTO" "RHSn"];
+varnames = ["RHS" "LTO" "LHS" "RTO" "RHSn"]
 for t=trialTypes 
     
     for i = 1:length(GE.(t).events.RHS)
