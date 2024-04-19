@@ -176,14 +176,14 @@ end
 for t = trialTypes
     % time is in the first column of both files
     % sets first point of trial time to 0
-    MC.(t).time0 = MC.(t).data.TimeStamp-MC.(t).data.TimeStamp(1);
+    MC.(t).time0 = MC.(t).data.TimeStamp-MC.(t).data.TimeStamp(1); % make variable which subtracts first time from all times
 
     % treadmill file
     TM.(t).time0 = TM.(t).data.Time-TM.(t).data.Time(1);
     
     %find t_start 
-    TM.(t).t_start_idx = find(TM.(t).data.t < 0.0001, 1, 'last') + 1;
-    TM.(t).t_start = TM.(t).time0(TM.(t).t_start_idx);
+    TM.(t).t_start_idx = find(TM.(t).data.t < 0.0001, 1, 'last') + 1; % find last index where t=0
+    TM.(t).t_start = TM.(t).time0(TM.(t).t_start_idx); %find time value based on this index 
 
     %find t_start in MC
     MC.(t).t_start_idx = find(MC.(t).time0 < TM.(t).t_start, 1, 'last') + 1;
@@ -199,9 +199,28 @@ for t = trialTypes
     TM.(t).rawdata = TM.(t).data;
     MC.(t).rawdata = MC.(t).data;
 
-    %saving truncated data under "data"
-    TM.(t).data = TM.(t).data(TM.(t).t_start_idx-1:end, :);
-    MC.(t).data = MC.(t).data(MC.(t).t_start_idx-1:end, :);
+    % cut end timing off
+    if  t == "nopert"
+        TM.(t).end_time = TM.(t).time0(TM.(t).t_start_idx) + 300;
+        TM.(t).end_idx = find(TM.(t).time0 < TM.(t).end_time, 1, 'last');
+        TM.(t).data = TM.(t).data(TM.(t).t_start_idx-1:TM.(t).end_idx + 1, :);
+ 
+        MC.(t).end_time = MC.(t).time0(MC.(t).t_start_idx) + 300;
+        MC.(t).end_idx = find(MC.(t).time0 < MC.(t).end_time, 1, 'last');
+        MC.(t).data = MC.(t).data(MC.(t).t_start_idx-1:MC.(t).end_idx + 1, :);
+        
+    else 
+        TM.(t).end_time = TM.(t).time0(TM.(t).t_start_idx) + 420;
+        TM.(t).end_idx = find(TM.(t).time0 < TM.(t).end_time, 1, 'last');
+        TM.(t).data = TM.(t).data(TM.(t).t_start_idx-1:TM.(t).end_idx + 1, :);
+
+
+        MC.(t).end_time = MC.(t).time0(MC.(t).t_start_idx) + 420;
+        MC.(t).end_idx = find(MC.(t).time0 < MC.(t).end_time, 1, 'last');
+        MC.(t).data = MC.(t).data(MC.(t).t_start_idx-1:MC.(t).end_idx + 1, :);
+    end
+
+   
 
  %----------------EMG-------------------
     %save copy of EMG rawdata
@@ -223,29 +242,49 @@ for t = trialTypes
     %check EMG sampling rate
     EMG.(t).checks.interval(1) = mean(diff(EMG.(t).data.Times));
     EMG.(t).checks.srate = 1/EMG.(t).checks.interval(1);
+
+    % initalizing time of EMG to zero
+    EMG.(t).TimeABS = EMG.(t).data.Times - EMG.(t).data.Times(1);
     
 end 
 
-%creating EMG time interval to start at zero
-for i = 1:length(EMG.bpm15.data.Times)
+% for t = trialTypes
+% 
+%     EMG.(t).TimeABS = EMG.(t).data.Times - EMG.(t).data.Times(1);
+% 
+% end 
 
-        %EMG.(t).data.TimesABS(i,1) = EMG.(t).data.Times(i)-EMG.(t).data.Times(1);
-        EMG.TimesABS(i,1) = EMG.bpm15.checks.interval(1)*i - EMG.bpm15.checks.interval(1);
-
-        i = i+1;
-    end 
 
 %% Truncation Checks 
+%----TM check----
 ct = 1; 
+figure
 for t = trialTypes
     
     %check truncation plotz
     subplot(2,3,ct)
    % hold on
-    plot(TM.(t).rawdata.Time(1:6000), TM.(t).rawdata.SpeedActual1(1:6000), 'm')
+    plot(TM.(t).rawdata.Time, TM.(t).rawdata.SpeedActual1, 'm')
     hold on
-    plot(TM.(t).data.Time(1:6000), TM.(t).data.SpeedActual1(1:6000), 'g')
-    ylim([-0.2 0.5])
+    plot(TM.(t).data.Time, TM.(t).data.SpeedActual1, 'g')
+    title(t)
+
+    ct=ct+1;
+end 
+legend("rawdata","truncated")
+
+
+%-----MC check----
+ct = 1; 
+figure
+for t = trialTypes
+    
+    %check truncation plotz
+    subplot(2,3,ct)
+   % hold on
+    plot(MC.(t).rawdata.TimeStamp, MC.(t).rawdata.FP1_ForY, 'm')
+    hold on
+    plot(MC.(t).data.TimeStamp, MC.(t).data.FP1_ForY, 'g')
     title(t)
 
     ct=ct+1;
@@ -279,7 +318,7 @@ for t = trialTypes
     TM.(t).trialtime = diff(TM.(t).data.Time([1 end]));
     MC.(t).trialtime = diff(MC.(t).data.TimeStamp([1 end]));
 
-    trialtime = mean([TM.(t).trialtime MC.(t).trialtime]);
+    trialtime = min([TM.(t).trialtime MC.(t).trialtime]);
 
     timeq = linspace(0,trialtime,trialtime*des_srate);
 
@@ -601,18 +640,25 @@ for t = trialTypes
 end
 
 %% EMG 
-
+close all
 %convert GE index to time t
 varnames = ["RHS" "LTO" "LHS" "RTO" "RHSn"];
 for t=trialTypes 
     
     for i = 1:length(GE.(t).events.RHS)
         
-        rhs(i,1) = TM.(t).data.t(GE.(t).events.RHS(i));
-        lto(i,1) = TM.(t).data.t(GE.(t).events.LTO(i));
-        lhs(i,1) = TM.(t).data.t(GE.(t).events.LHS(i));
-        rto(i,1) = TM.(t).data.t(GE.(t).events.RTO(i));
-        rhsn(i,1) = TM.(t).data.t(GE.(t).events.RHSn(i));
+%         rhs(i,1) = TM.(t).data.t(GE.(t).events.RHS(i));
+%         lto(i,1) = TM.(t).data.t(GE.(t).events.LTO(i));
+%         lhs(i,1) = TM.(t).data.t(GE.(t).events.LHS(i));
+%         rto(i,1) = TM.(t).data.t(GE.(t).events.RTO(i));
+%         rhsn(i,1) = TM.(t).data.t(GE.(t).events.RHSn(i));
+          
+          rhs(i,1) = TM.(t).itime(GE.(t).events.RHS(i));
+          lto(i,1) = TM.(t).itime(GE.(t).events.LTO(i));
+          lhs(i,1) = TM.(t).itime(GE.(t).events.LHS(i));
+          rto(i,1) = TM.(t).itime(GE.(t).events.RTO(i));
+          rhsn(i,1) = TM.(t).itime(GE.(t).events.RHSn(i));
+          
 
     end 
 
@@ -620,24 +666,66 @@ for t=trialTypes
 
     GE.(t).eventsTime = table(rhs, lto, lhs, rto, rhsn, 'VariableNames',varnames);
 
-    muscle = ["BICEPSFEMLTuV" "LATGASTROLTuV" "MEDGASTROLTuV" "SOLEUSLTuV"...
+    
+
+end 
+
+muscle = ["BICEPSFEMLTuV" "LATGASTROLTuV" "MEDGASTROLTuV" "SOLEUSLTuV"...
         "RECTUSFEMLTuV" "VLOLTuV" "TIBANTLTuV" "BICEPSFEMRTuV" "LATGASTRORTuV"...
-        "MEDGASTRORTuV" "SOLEUSRTuV" "RECTUSFEMRTuV" "VLORTuV" "TIBANTRTuV"]
+        "MEDGASTRORTuV" "SOLEUSRTuV" "RECTUSFEMRTuV" "VLORTuV" "TIBANTRTuV"];
 
-    check_gaitevents(EMG.(t).data.muscle,GE.(t).events(GE.(t).goodstrides,:),0,subj+", "+t)
+for t = trialTypes 
 
-% plot gait events versus vertical GRF
-nstrides = height(GE);
+    
 
-figure
-plot(EMG.TimesABS, EMG.(t).data.muscle);
-hold on
-plot(GE.(t).eventsTime.RHS,ones(nstrides,1)*0, 'rx','LineWidth',2);
-plot(GE.(t).eventsTime.LTO,ones(nstrides,1)*0, 'bo','LineWidth',2);
-plot(GE.(t).eventsTime.LHS,ones(nstrides,1)*0, 'bx','LineWidth',2);
-plot(GE.(t).eventsTime.RTO,ones(nstrides,1)*0, 'ro','LineWidth',2);
-legend(["GRF1" "GRF2" "RHS" "LTO" "LHS" "RTO"])
-title(muscle)
+    for m = muscle 
+        %check_gaitevents(EMG.(t).data.(m),GE.(t).events(GE.(t).goodstrides,:),0,subj+", "+t)
+    
+        % plot gait events versus vertical GRF
+        nstrides = length(GE.(t).eventsTime.RHS);
+        %if t == "nopert"
+%             figure
+%             plot(EMG.(t).TimeABS, EMG.(t).data.(m(:,1)), 'g');
+%             hold on
+%             plot(GE.(t).eventsTime.RHS,ones(nstrides,1)*0, 'rx','LineWidth',2);
+%             plot(GE.(t).eventsTime.LTO,ones(nstrides,1)*0, 'bo','LineWidth',2);
+%             plot(GE.(t).eventsTime.LHS,ones(nstrides,1)*0, 'bx','LineWidth',2);
+%             plot(GE.(t).eventsTime.RTO,ones(nstrides,1)*0, 'ro','LineWidth',2);
+%             legend([m "RHS" "LTO" "LHS" "RTO"])
+%             title(m)
+%  
+            figure(10000)
+            plot(EMG.(t).TimeABS, EMG.(t).data.(m(:,1)), 'g');
+            hold on
+            plot(GE.(t).eventsTime.RHS,ones(nstrides,1)*0, 'rx','LineWidth',2);
+            plot(GE.(t).eventsTime.LTO,ones(nstrides,1)*0, 'bo','LineWidth',2);
+            plot(GE.(t).eventsTime.LHS,ones(nstrides,1)*0, 'bx','LineWidth',2);
+            plot(GE.(t).eventsTime.RTO,ones(nstrides,1)*0, 'ro','LineWidth',2);
+            legend([m "RHS" "LTO" "LHS" "RTO"])
+            title(t,m)
+%             
+%             savepathEMG = p2l.resultsEMG;
+%             cd(savepathEMG);
+%             saveas(10000, subj + "_" + t + "_" + m +"_EMG_gaitevents.fig")
+    end 
+
+end
+
+%% Split EMG by Strides
+freq.sampling = 2000;
+freq.hi = 20; 
+freq.lo = 10;
+
+for t = trialTypes 
+ 
+    EMG.(t).GEidx = array2table(floor(GE.(t).eventsTime{:,:} * 2000));
+    EMG.(t).GEidx.Properties.VariableNames  = ["RHS" "LTO" "LHS" "RTO" "RHSn"];
+
+     for m = muscle 
+         EMG.(t).(m).fdata = emgfilt(EMG.(t).data.(m), freq);
+         strides.EMG.(t).(m) = split_strides_normgc(array2table(EMG.(t).(m).fdata), EMG.(t).GEidx, 2500, 1);
+         title(m)
+     end 
 
 end 
 
@@ -651,7 +739,8 @@ end
 % hold on
 
 %% Save data 
-save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
+% save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
+save(p2l.results+subj+"_isubj_metrics.mat","strides");
 save(p2l.results+subj+"_isubj_datastruct","MC","TM", "GE");
 save(p2l.resultsEMG+subj+"_isubj_EMGdatastruct","EMG");
 
