@@ -61,7 +61,8 @@ close all; clc;
  %% 1 - Experiment info - project, subj codes, trials, etc.
 
 projCode = "FE";
-% if subj or var are not defined use SPP7 otherwise will used defined subj
+subj = "test";
+% if subj or var are not defined use FE1 otherwise will used defined subj
 % set to 1 to run checks
 run_checks = 1;
 % set to 1 to save checks
@@ -159,7 +160,7 @@ if run_checks
     [TM, MC, CHK.srate] = check_srate(TM,MC,trialTypes,savepath);
 
     % Check perturbation frequency onset
-  %  [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
+    [TM, CHK.freq] = check_freq(TM,trialTypes,savepath);
 end
 
 %% Truncate data 
@@ -210,12 +211,12 @@ for t = trialTypes
         MC.(t).data = MC.(t).data(MC.(t).t_start_idx-1:MC.(t).end_idx + 1, :);
         
     else 
-        TM.(t).end_time = TM.(t).time0(TM.(t).t_start_idx) + 420;
+        TM.(t).end_time = TM.(t).time0(TM.(t).t_start_idx) + 430;
         TM.(t).end_idx = find(TM.(t).time0 < TM.(t).end_time, 1, 'last');
         TM.(t).data = TM.(t).data(TM.(t).t_start_idx-1:TM.(t).end_idx + 1, :);
 
 
-        MC.(t).end_time = MC.(t).time0(MC.(t).t_start_idx) + 420;
+        MC.(t).end_time = MC.(t).time0(MC.(t).t_start_idx) + 430;
         MC.(t).end_idx = find(MC.(t).time0 < MC.(t).end_time, 1, 'last');
         MC.(t).data = MC.(t).data(MC.(t).t_start_idx-1:MC.(t).end_idx + 1, :);
     end
@@ -234,7 +235,7 @@ for t = trialTypes
         EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
         EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
     else 
-        EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 420;
+        EMG.(t).end_time = EMG.(t).data.Times(EMG.(t).beg_idx) + 430;
         EMG.(t).end_idx = find(EMG.(t).data.Times < EMG.(t).end_time, 1, 'last');
         EMG.(t).data = EMG.(t).data(EMG.(t).beg_idx:EMG.(t).end_idx, :);
     end
@@ -426,9 +427,9 @@ for t = trialTypes
 %         window(2) = find(TM.(t).idata(:,idx)==560,1,'last');
 %     end
 
-%chopped out first 10 sec (ramp up speed) and end at 420 seconds
+%chopped out first 10 sec (ramp up speed) and end at 430 seconds
     window(1) = find(TM.(t).idata.t < 10, 1, 'last') + 1;
-    window(2) = find(TM.(t).idata.t < 420, 1, 'last') +1 ;
+    window(2) = find(TM.(t).idata.t < 430, 1, 'last') +1 ;
 
     % ****
     lpfc = 6; % lowpass cutoff frequency
@@ -513,7 +514,7 @@ for t = trialTypes
     close all
 end
 
-%% 10 - Calculate and plot gait cycle mean+/-sd
+   %% 10 - Calculate and plot gait cycle mean+/-sd
 %
 % clear plotinfo
 % plotinfo.varname{1} = "X_ML";
@@ -694,7 +695,7 @@ for t = trialTypes
 %             legend([m "RHS" "LTO" "LHS" "RTO"])
 %             title(m)
 %  
-            figure(10000)
+            figure
             plot(EMG.(t).TimeABS, EMG.(t).data.(m(:,1)), 'g');
             hold on
             plot(GE.(t).eventsTime.RHS,ones(nstrides,1)*0, 'rx','LineWidth',2);
@@ -707,6 +708,8 @@ for t = trialTypes
 %             savepathEMG = p2l.resultsEMG;
 %             cd(savepathEMG);
 %             saveas(10000, subj + "_" + t + "_" + m +"_EMG_gaitevents.fig")
+   
+
     end 
 
 end
@@ -723,7 +726,7 @@ for t = trialTypes
 
      for m = muscle 
          EMG.(t).(m).fdata = emgfilt(EMG.(t).data.(m), freq);
-         strides.EMG.(t).(m) = split_strides_normgc(array2table(EMG.(t).(m).fdata), EMG.(t).GEidx, 2500, 1);
+         strides.EMG.(t).(m) = split_strides_normgc(array2table(EMG.(t).(m).fdata), EMG.(t).GEidx, 2500, 0);
          title(m)
      end 
 
@@ -739,8 +742,8 @@ end
 % hold on
 
 %% Save data 
-% save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
-save(p2l.results+subj+"_isubj_metrics.mat","strides");
+save(p2l.results+subj+"_isubj_metrics.mat","WSPD","strides","SK");
+%save(p2l.results+subj+"_isubj_metrics.mat","strides");
 save(p2l.results+subj+"_isubj_datastruct","MC","TM", "GE");
 save(p2l.resultsEMG+subj+"_isubj_EMGdatastruct","EMG");
 

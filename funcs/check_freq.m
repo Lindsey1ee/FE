@@ -20,7 +20,8 @@ else
     
     time_idx = find(diff(0.03*swaySign) < 0); %finds where perturbation occurs and duration of perturbation
     
-    figure
+    hf=800;
+    figure(hf)
     plot(TM.(t).data.t, TM.(t).data.SwayActual)
     hold on
     plot(TM.(t).data.t, 0.03*swaySign)
@@ -63,6 +64,12 @@ T = array2table(freqinfo,'VariableNames',...
 
 disp(T)
 
+    strparts = split(TM.(t).file,"/");
+    filename=strparts(end);
+
+    strparts = split(filename,"_");
+    subj=strparts(1);
+    
 % save plots and table
 if ~exist("savepath","var"), savepath=[]; end
 if ~isempty(savepath)
